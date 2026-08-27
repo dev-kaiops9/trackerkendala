@@ -46,9 +46,10 @@
       if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', options);
 
       // Restore sesi admin dari localStorage kalau ada (browser ini saja)
+      const savedLoggedIn = localStorage.getItem('isAdminLoggedIn');
       const savedToken = localStorage.getItem('adminToken');
-      if (savedToken) {
-        adminToken = savedToken;
+      if (savedLoggedIn === '1') {
+        adminToken = savedToken || ADMIN_PASSWORD;
         isAdminLoggedIn = true;
         updateAdminUI();
       }
@@ -79,54 +80,53 @@
 
     // -----------------------------------------------------------------
     // LOGIN ADMIN
-    // Token admin sekarang divalidasi oleh SERVER (bukan hanya di client).
-    // Cara kerja: token yang dimasukkan disimpan di client, lalu dikirim
-    // ke server setiap kali melakukan aksi sensitif (hapus data). Server
-    // (code.gs) yang menentukan apakah token itu benar, dengan
-    // membandingkannya ke ADMIN_TOKEN yang tersimpan di Script Properties.
-    // Login di sini TIDAK melakukan pengecekan lokal supaya token tidak
-    // pernah di-hardcode di file yang publik di GitHub.
+    // Login sekarang pakai username + password tetap (username: admin,
+    // password: devop9b), dicek di sisi client, hanya untuk membuka akses
+    // ke menu edit (aksi admin seperti Hapus di tabel "Cek Data").
+    //
+    // CATATAN KEAMANAN: karena file ini dihosting sebagai file statis
+    // (frontend-only), siapa pun yang membuka app.js lewat "View Source"
+    // bisa melihat username/password ini. Gerbang ini cukup untuk
+    // menyembunyikan menu edit dari pengguna biasa, TAPI BUKAN pengaman
+    // yang kuat. Aksi hapus tetap divalidasi ulang oleh server (Code.gs)
+    // memakai ADMIN_TOKEN di Script Properties - kalau mau aksi hapus
+    // tetap berfungsi, set ADMIN_TOKEN di Script Properties menjadi
+    // sama dengan password ini ("devop9b"), atau ganti sendiri di bawah.
     // -----------------------------------------------------------------
+    const ADMIN_USERNAME = 'admin';
+    const ADMIN_PASSWORD = 'devop9b';
+
     async function handleLoginAdmin(e) {
       e.preventDefault();
-      const tokenInput = document.getElementById('adminTokenInput').value.trim();
+      const usernameInput = document.getElementById('adminUsernameInput').value.trim();
+      const passwordInput = document.getElementById('adminPasswordInput').value;
+      const errorMsg = document.getElementById('loginErrorMsg');
 
-      if (!tokenInput) {
-        showToast('Gagal', 'Token tidak boleh kosong.', 'error');
+      if (usernameInput !== ADMIN_USERNAME || passwordInput !== ADMIN_PASSWORD) {
+        errorMsg.classList.remove('hidden');
+        showToast('Gagal Login!', 'Username atau password salah.', 'error');
         return;
       }
 
-      showToast('Memeriksa', 'Memvalidasi token...', 'info');
+      errorMsg.classList.add('hidden');
 
-      try {
-        // Validasi token dengan mencoba memanggil aksi ringan yang butuh auth.
-        // Kita pakai "deleteKendala" dengan target kosong hanya untuk
-        // memeriksa otorisasi tanpa benar-benar menghapus apa pun,
-        // karena server menolak token salah sebelum menyentuh data,
-        // dan menolak juga judul kosong sebelum menghapus apa pun.
-        const result = await callAppsScriptPost('deleteKendala', { token: tokenInput, targetTitle: '' });
+      // adminToken dipakai kalau ada aksi yang masih butuh otorisasi server (mis. Hapus)
+      adminToken = passwordInput;
+      isAdminLoggedIn = true;
+      localStorage.setItem('isAdminLoggedIn', '1');
+      localStorage.setItem('adminToken', adminToken);
 
-        if (result && result.message === 'Unauthorized. Token admin tidak valid.') {
-          showToast('Gagal Login!', 'Token salah.', 'error');
-          return;
-        }
-
-        // Token valid (server lolos validasi otorisasi, walau delete-nya sendiri gagal karena judul kosong)
-        adminToken = tokenInput;
-        isAdminLoggedIn = true;
-        localStorage.setItem('adminToken', tokenInput);
-        closeLoginModal();
-        showToast('Login Berhasil!', 'Status Admin Aktif.', 'success');
-        updateAdminUI();
-        document.getElementById('adminTokenInput').value = '';
-      } catch (err) {
-        showToast('Gagal!', 'Koneksi error: ' + err.message, 'error');
-      }
+      closeLoginModal();
+      showToast('Login Berhasil!', 'Status Admin Aktif.', 'success');
+      updateAdminUI();
+      document.getElementById('adminUsernameInput').value = '';
+      document.getElementById('adminPasswordInput').value = '';
     }
 
     function logoutAdmin() {
       isAdminLoggedIn = false;
       adminToken = null;
+      localStorage.removeItem('isAdminLoggedIn');
       localStorage.removeItem('adminToken');
       updateAdminUI();
       showToast('Logout', 'Sesi Admin diakhiri.', 'info');
@@ -170,6 +170,74 @@
           showToast('Gagal!', (response && response.message) ? response.message : 'Gagal menghapus.', 'error');
         }
       } catch (err) {
+        showToast('Gagal!', err.message || 'Koneksi error.', 'error');
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // EDIT KENDALA (khusus Admin)
+    // -----------------------------------------------------------------
+    function openEditModal(index) {
+      if (!isAdminLoggedIn) {
+        showToast('Ditolak!', 'Akses edit hanya untuk Admin.', 'error');
+        return;
+      }
+
+      const item = appData[index];
+      if (!item) return;
+
+      document.getElementById('editKendalaId').value = item.id || '';
+      document.getElementById('editJudulKendala').value = item.judulKendala || '';
+      document.getElementById('editDetailKendala').value = item.detailKendala || '';
+      document.getElementById('editSolusiTerkini').value = item.solusiTerkini || '';
+
+      const modal = document.getElementById('editKendalaModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('editKendalaModal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    async function submitEditKendala(e) {
+      e.preventDefault();
+
+      if (!isAdminLoggedIn) {
+        showToast('Ditolak!', 'Akses edit hanya untuk Admin.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitEditKendala');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> <span>Menyimpan...</span>';
+
+      const payload = {
+        token: adminToken,
+        id: document.getElementById('editKendalaId').value,
+        judulKendala: document.getElementById('editJudulKendala').value.trim(),
+        detailKendala: document.getElementById('editDetailKendala').value.trim(),
+        solusiTerkini: document.getElementById('editSolusiTerkini').value.trim()
+      };
+
+      try {
+        const response = await callAppsScriptPost('editKendala', payload);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (response && response.success) {
+          showToast('Sukses!', response.message || 'Kendala berhasil diperbarui.', 'success');
+          closeEditModal();
+          fetchDataFromAppsScript();
+        } else {
+          showToast('Gagal!', (response && response.message) ? response.message : 'Gagal memperbarui kendala.', 'error');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
         showToast('Gagal!', err.message || 'Koneksi error.', 'error');
       }
     }
@@ -536,7 +604,10 @@
           <td class="py-3.5 px-4 text-center font-semibold text-slate-700 align-top">${escapeHtml(item.pic || '-')}</td>
           <td class="py-3.5 px-4 text-center whitespace-nowrap align-top">${statusBadge}</td>
           ${isAdminLoggedIn ? `
-            <td class="py-3.5 px-4 text-center align-top col-action whitespace-nowrap">
+            <td class="py-3.5 px-4 text-center align-top col-action whitespace-nowrap space-x-1.5">
+              <button type="button" onclick="openEditModal(${index})" title="Edit" class="px-2.5 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-app-primary font-bold rounded-lg transition text-xs">
+                <i class="fa-solid fa-pen mr-1"></i>Edit
+              </button>
               <button type="button" onclick="deleteKendala(${index})" title="Hapus" class="px-2.5 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold rounded-lg transition text-xs">
                 <i class="fa-solid fa-trash-can mr-1"></i>Hapus
               </button>
@@ -578,6 +649,9 @@
             <div class="flex items-center space-x-3">
               <span class="font-bold text-slate-600"><i class="fa-solid fa-user-circle mr-1 text-app-primary"></i>${escapeHtml(item.pic || 'Tanpa PIC')}</span>
               ${isAdminLoggedIn ? `
+                <button type="button" onclick="openEditModal(${index})" class="px-2 py-1 bg-indigo-100 text-app-primary font-bold rounded-lg text-[10px]">
+                  <i class="fa-solid fa-pen mr-1"></i>Edit
+                </button>
                 <button type="button" onclick="deleteKendala(${index})" class="px-2 py-1 bg-rose-100 text-rose-600 font-bold rounded-lg text-[10px]">
                   <i class="fa-solid fa-trash-can mr-1"></i>Hapus
                 </button>

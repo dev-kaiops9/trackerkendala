@@ -163,17 +163,62 @@
               <i class="fa-solid fa-lock"></i>
             </div>
             <h3 class="text-lg font-bold text-slate-900">Login Administrator</h3>
-            <p class="text-xs text-slate-500 mt-1">Masukkan token admin</p>
+            <p class="text-xs text-slate-500 mt-1">Masuk untuk mengakses menu edit</p>
           </div>
 
           <form onsubmit="handleLoginAdmin(event)" class="space-y-4">
             <div>
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Token Admin</label>
-              <input type="password" id="adminTokenInput" required placeholder="Masukkan token admin" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Username</label>
+              <input type="text" id="adminUsernameInput" required autocomplete="username" placeholder="Masukkan username" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none">
             </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+              <input type="password" id="adminPasswordInput" required autocomplete="current-password" placeholder="Masukkan password" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none">
+            </div>
+            <p id="loginErrorMsg" class="hidden text-xs font-semibold text-rose-600">Username atau password salah.</p>
             <button type="submit" class="w-full py-3 bg-app-primary hover:bg-app-primaryDark text-white font-bold text-sm rounded-xl shadow-purple-glow transition">
               Masuk
             </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal Edit Kendala -->
+      <div id="editKendalaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200 px-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-indigo-100 relative max-h-[90vh] overflow-y-auto">
+          <button type="button" onclick="closeEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+
+          <div class="mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-app-cardPurple text-app-primary flex items-center justify-center text-xl mb-3">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Edit Kendala</h3>
+            <p class="text-xs text-slate-500 mt-1">Perbarui judul, detail, atau solusi terkini kendala ini.</p>
+          </div>
+
+          <form onsubmit="submitEditKendala(event)" class="space-y-4">
+            <input type="hidden" id="editKendalaId">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Judul Kendala <span class="text-rose-500">*</span></label>
+              <input type="text" id="editJudulKendala" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Detail Kendala <span class="text-rose-500">*</span></label>
+              <textarea id="editDetailKendala" rows="3" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Solusi Terkini <span class="text-rose-500">*</span></label>
+              <textarea id="editSolusiTerkini" rows="3" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+            </div>
+            <p class="text-[11px] text-slate-400">Catatan: mengubah judul akan otomatis menyinkronkan riwayat problem solving yang sudah tertaut ke kendala ini. Foto kendala tidak bisa diubah dari sini.</p>
+            <div class="pt-2 flex justify-end">
+              <button type="submit" id="btnSubmitEditKendala" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-app-primary to-app-accentPurple hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Simpan Perubahan</span>
+              </button>
+            </div>
           </form>
         </div>
       </div>
