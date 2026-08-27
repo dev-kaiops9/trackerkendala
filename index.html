@@ -78,7 +78,7 @@
 
       <!-- Topbar -->
       <header class="sticky top-0 z-40 bg-[#f2f0f9]/90 backdrop-blur-md px-4 sm:px-8 pt-4 pb-2">
-        <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+        <div class="w-full flex items-center justify-between gap-3">
 
           <!-- Brand (mobile only, sidebar hides it on desktop) -->
           <div class="flex md:hidden items-center space-x-3 min-w-0">
@@ -123,13 +123,13 @@
         </div>
 
         <!-- Mobile search -->
-        <div class="max-w-6xl mx-auto mt-3 md:hidden relative">
+        <div class="w-full mt-3 md:hidden relative">
           <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
           <input type="text" id="globalSearchInputMobile" onkeydown="handleGlobalSearchKey(event, true)" placeholder="Cari kendala..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-indigo-100/60 bg-white text-xs outline-none shadow-sm">
         </div>
 
         <!-- Mobile tab nav (sidebar replacement) -->
-        <div class="max-w-6xl mx-auto mt-3 md:hidden">
+        <div class="w-full mt-3 md:hidden">
           <div class="bg-white/80 p-1.5 rounded-2xl border border-indigo-100/60 shadow-soft-widget backdrop-blur-md flex space-x-1 overflow-x-auto no-scrollbar">
             <button type="button" data-tab="dashboard" onclick="switchTab('dashboard')" class="nav-tab flex-1 whitespace-nowrap py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-white bg-gradient-to-r from-app-primary to-app-accentPurple shadow-purple-glow flex items-center justify-center space-x-1.5">
               <i class="fa-solid fa-gauge-high text-sm"></i>
@@ -232,7 +232,7 @@
       </div>
 
       <!-- Main Content -->
-      <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-8 py-5">
+      <main class="flex-grow w-full px-4 sm:px-8 py-5">
 
         <!-- TAB 0: DASHBOARD -->
         <section id="content-dashboard" class="tab-content active space-y-5">
