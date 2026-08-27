@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tracker-kendala-op9b",
+  "compatibility_date": "2026-08-27",
+
+  // Workers Static Assets: melayani file statis (index.html, dll) langsung
+  // dari Worker tanpa perlu KV atau Worker script tambahan.
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "single-page-application"
+  }
+
+  // Catatan:
+  // - "directory": "." berarti Cloudflare akan serve file langsung dari
+  //   root repo ini (tempat wrangler.jsonc berada) — cocok untuk struktur
+  //   repo kamu yang cuma punya index.html di root, tanpa folder public/.
+  // - "not_found_handling": "single-page-application" membuat semua path
+  //   yang tidak ditemukan tetap diarahkan ke index.html. Ini aman untuk
+  //   app 1-halaman seperti Tracker Kendala ini. Kalau kamu tidak butuh
+  //   fallback ini, boleh dihapus barisnya.
+  // - Tidak perlu field "main" karena tidak ada logic Worker (JS) di sisi
+  //   server Cloudflare — semua logic backend tetap di Apps Script.
+}
