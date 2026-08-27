@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sistem Manajemen Kendala & Problem Solving</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            app: {
+              bg: '#f2f0f9',
+              surface: '#ffffff',
+              primary: '#635bfc',
+              primaryDark: '#4f46e5',
+              accentPurple: '#7c3aed',
+              cardPurple: '#ece9fe',
+              cardBlue: '#e0f2fe',
+              cardYellow: '#fef3c7',
+              cardGreen: '#d1fae5',
+              darkCard: '#2a285c',
+            }
+          },
+          boxShadow: {
+            'soft-widget': '0 12px 30px -10px rgba(99, 91, 252, 0.08), 0 4px 12px -2px rgba(0,0,0,0.03)',
+            'purple-glow': '0 10px 25px -5px rgba(99, 91, 252, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f2f0f9;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f2f0f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 99px;
+    }
+  </style>
+</head>
+
+<body class="bg-[#f2f0f9] text-slate-800 min-h-screen flex flex-col antialiased pb-20 sm:pb-8">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-[#f2f0f9]/90 backdrop-blur-md px-4 sm:px-8 pt-4 pb-2">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-app-primary to-purple-500 text-white flex items-center justify-center shadow-purple-glow">
+          <i class="fa-solid fa-layer-group text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">Tracker Kendala OP 9B</h1>
+          <p class="text-[11px] sm:text-xs text-indigo-900/60 font-medium" id="headerCurrentDate">Sistem Kendala</p>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" id="btnOpenLoginModal" onclick="openLoginModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-user-shield text-amber-400"></i>
+          <span>Admin</span>
+        </button>
+        <div id="adminBadge" class="hidden flex items-center space-x-2">
+          <span class="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl flex items-center space-x-1 border border-emerald-300">
+            <i class="fa-solid fa-user-check text-emerald-600"></i>
+            <span>Admin Active</span>
+          </span>
+          <button type="button" onclick="logoutAdmin()" title="Logout Admin" class="p-2 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-xl transition text-xs">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto mt-4">
+  <div class="bg-white/80 p-1.5 rounded-2xl border border-indigo-100/60 shadow-soft-widget backdrop-blur-md flex space-x-1 overflow-x-auto no-scrollbar">
+    <!-- Tab Aktif (Kendala) -->
+    <button type="button" onclick="switchTab('kendala')" id="tab-kendala" class="nav-tab flex-1 whitespace-nowrap py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all text-white bg-gradient-to-r from-app-primary to-app-accentPurple shadow-purple-glow flex items-center justify-center space-x-2">
+      <i class="fa-solid fa-plus-circle text-sm"></i>
+      <span>Kendala</span>
+    </button>
+
+    <!-- Tab Non-Aktif (Problem Solving) -->
+    <button type="button" onclick="switchTab('problem-solving')" id="tab-problem-solving" class="nav-tab flex-1 whitespace-nowrap py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-slate-600 flex items-center justify-center space-x-2">
+      <i class="fa-solid fa-lightbulb text-sm"></i>
+      <span>Problem Solving</span>
+    </button>
+
+    <!-- Tab Non-Aktif (Cek Data) -->
+    <button type="button" onclick="switchTab('cek-data')" id="tab-cek-data" class="nav-tab flex-1 whitespace-nowrap py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-slate-600 flex items-center justify-center space-x-2">
+      <i class="fa-solid fa-table-cells text-sm"></i>
+      <span>Cek Data</span>
+    </button>
+  </div>
+</div>
+  </header>
+
+  <!-- Modal Admin -->
+  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-11/12 shadow-2xl border border-indigo-100 relative">
+      <button type="button" onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-app-primary flex items-center justify-center text-xl mx-auto mb-3">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">Login Administrator</h3>
+        <p class="text-xs text-slate-500 mt-1">Masukkan token admin</p>
+      </div>
+
+      <form onsubmit="handleLoginAdmin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Token Admin</label>
+          <input type="password" id="adminTokenInput" required placeholder="Masukkan token admin" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none">
+        </div>
+        <button type="submit" class="w-full py-3 bg-app-primary hover:bg-app-primaryDark text-white font-bold text-sm rounded-xl shadow-purple-glow transition">
+          Masuk
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 max-w-sm w-11/12 z-50 transform transition-all duration-300 -translate-y-20 opacity-0 pointer-events-none">
+    <div id="toastContent" class="flex items-center p-4 rounded-2xl shadow-2xl border text-xs sm:text-sm bg-app-darkCard text-white border-indigo-500/30 backdrop-blur-md">
+      <div id="toastIcon" class="mr-3 text-lg flex-shrink-0"></div>
+      <div id="toastMessage" class="font-medium"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-8 py-5">
+
+    <!-- TAB 1: KENDALA -->
+    <section id="content-kendala" class="tab-content active space-y-5">
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-soft-widget border border-indigo-100/60 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-app-cardPurple text-app-primary flex items-center justify-center font-bold">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">Form Input Kendala</h2>
+              <p class="text-xs text-slate-500">Catat kendala operasional & upload bukti foto</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-app-cardPurple text-app-primary">Step 01</span>
+        </div>
+
+        <form id="formKendala" onsubmit="submitKendala(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">1. Judul Kendala <span class="text-rose-500">*</span></label>
+            <input type="text" id="judulKendala" required placeholder="Contoh: Server API Timeout cetak laporan" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">2. Detail Kendala <span class="text-rose-500">*</span></label>
+            <textarea id="detailKendala" rows="3" required placeholder="Jelaskan kronologi & pesan error..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">3. Solusi Terkini / Workaround <span class="text-rose-500">*</span></label>
+            <textarea id="solusiTerkini" rows="2" required placeholder="Penanganan sementara..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">4. Upload Foto Kendala <span class="text-slate-400 font-normal lowercase">(opsional, maks 3 foto)</span></label>
+            <input type="file" id="fotoFileInput" accept="image/*" multiple onchange="checkFileLimit(this)" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs sm:text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-app-primary hover:file:bg-indigo-100 transition">
+            <p class="text-[11px] text-slate-400 mt-1">Format gambar (JPG, PNG). Maksimal 3 foto, maks 1 MB per foto.</p>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button type="submit" id="btnSubmitKendala" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-app-primary to-app-accentPurple hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-purple-glow transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Submit Kendala</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-1 flex items-center justify-between">
+          <span>Kendala Terbaru Ditambahkan</span>
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </h3>
+        <div id="recentKendalaList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PROBLEM SOLVING -->
+    <section id="content-problem-solving" class="tab-content space-y-5">
+      <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-soft-widget border border-indigo-100/60">
+        <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-screwdriver-wrench"></i>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">Form Problem Solving</h2>
+              <p class="text-xs text-slate-500">Pilih kendala aktif dan input Fix Solution/Bug</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Step 02</span>
+        </div>
+
+        <form id="formProblemSolving" onsubmit="submitProblemSolving(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">1. Pilih Judul Kendala <span class="text-rose-500">*</span></label>
+            <select id="selectJudulKendala" onchange="onSelectKendalaChanged()" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none text-slate-800">
+              <option value="">-- Pilih Judul Kendala --</option>
+            </select>
+          </div>
+
+          <div id="previewKendalaBox" class="hidden bg-app-cardBlue rounded-2xl p-4 text-xs space-y-2 border border-sky-200/60">
+            <div class="font-bold text-sky-900 flex items-center space-x-1.5">
+              <i class="fa-solid fa-circle-info text-sky-600"></i>
+              <span>Rincian Kendala Dipilih:</span>
+            </div>
+            <p class="text-slate-700"><span class="font-bold text-sky-800">Detail:</span> <span id="prevDetailKendala">-</span></p>
+            <p class="text-slate-700"><span class="font-bold text-sky-800">Solusi Terkini:</span> <span id="prevSolusiTerkini">-</span></p>
+            <div id="prevFotoBox" class="hidden text-slate-700">
+              <span class="font-bold text-sky-800">Foto Kendala:</span>
+              <span id="prevFotoContainer" class="ml-1 space-x-2"></span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">2. Akar Masalah (Root Cause) <span class="text-rose-500">*</span></label>
+            <textarea id="rootCause" rows="3" required placeholder="Mengapa kendala ini terjadi?..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">3. Fix Solution/Bug <span class="text-rose-500">*</span></label>
+            <textarea id="solusiPermanen" rows="3" required placeholder="Tindakan perbaikan yang telah diterapkan..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Penanggung Jawab (PIC)</label>
+              <input type="text" id="picKendala" placeholder="Nama PIC / Tim Developer" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Status Penyelesaian <span class="text-rose-500">*</span></label>
+              <select id="statusPenyelesaian" required class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm outline-none text-slate-800">
+                <option value="Dalam Proses">Dalam Proses (In Progress)</option>
+                <option value="Selesai">Selesai (Resolved)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-end">
+            <button type="submit" id="btnSubmitPS" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Simpan Problem Solving</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 3: CEK DATA -->
+    <section id="content-cek-data" class="tab-content space-y-5">
+      <div class="grid grid-cols-3 gap-3 sm:gap-4">
+        <div class="bg-app-darkCard text-white p-4 sm:p-5 rounded-3xl shadow-soft-widget flex flex-col justify-between">
+          <div class="w-9 h-9 rounded-2xl bg-white/10 flex items-center justify-center text-white text-base mb-2">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-indigo-200">Total Kendala</p>
+            <h4 id="statTotal" class="text-xl sm:text-3xl font-extrabold tracking-tight mt-0.5">0</h4>
+          </div>
+        </div>
+
+        <div class="bg-app-cardYellow text-amber-900 p-4 sm:p-5 rounded-3xl shadow-soft-widget flex flex-col justify-between border border-amber-200/60">
+          <div class="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center text-base mb-2">
+            <i class="fa-solid fa-spinner animate-spin"></i>
+          </div>
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-amber-800">Dalam Proses</p>
+            <h4 id="statProses" class="text-xl sm:text-3xl font-extrabold tracking-tight mt-0.5">0</h4>
+          </div>
+        </div>
+
+        <div class="bg-app-cardGreen text-emerald-950 p-4 sm:p-5 rounded-3xl shadow-soft-widget flex flex-col justify-between border border-emerald-200/60">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-700 flex items-center justify-center text-base mb-2">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <p class="text-[10px] sm:text-xs font-semibold text-emerald-800">Selesai</p>
+            <h4 id="statSelesai" class="text-xl sm:text-3xl font-extrabold tracking-tight mt-0.5">0</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table Card -->
+      <div class="bg-white rounded-3xl shadow-soft-widget border border-indigo-100/60 overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
+              <i class="fa-solid fa-database"></i>
+            </div>
+            <h2 class="text-base font-bold text-slate-900">Data Kendala & Solusi</h2>
+          </div>
+
+          <div class="flex flex-wrap items-center space-x-2">
+            <div class="relative flex-grow sm:w-48">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="searchInput" onkeyup="filterDataTable()" placeholder="Cari..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 outline-none">
+            </div>
+            <select id="filterStatus" onchange="filterDataTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-semibold outline-none">
+              <option value="ALL">Semua Status</option>
+              <option value="Menunggu Problem Solving">Belum Solusi</option>
+              <option value="Dalam Proses">Proses</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+            <select id="sortBy" onchange="sortData()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-semibold outline-none">
+              <option value="NEWEST" selected>Terbaru → Lama</option>
+              <option value="OLDEST">Lama → Terbaru</option>
+            </select>
+            <button type="button" onclick="refreshData()" title="Muat Ulang" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
+              <i class="fa-solid fa-rotate-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View Desktop -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
+                <th class="py-3.5 px-4">No</th>
+                <th class="py-3.5 px-4 min-w-[110px]">Waktu</th>
+                <th class="py-3.5 px-4 min-w-[150px]">Judul Kendala</th>
+                <th class="py-3.5 px-4 min-w-[180px]">Detail</th>
+                <th class="py-3.5 px-4 min-w-[160px]">Solusi Terkini</th>
+                <th class="py-3.5 px-4 text-center min-w-[110px]">Foto Kendala</th>
+                <th class="py-3.5 px-4 min-w-[180px]">Problem Solving</th>
+                <th class="py-3.5 px-4 text-center min-w-[90px]">PIC</th>
+                <th class="py-3.5 px-4 text-center min-w-[110px]">Status</th>
+                <th class="py-3.5 px-4 text-center col-action hidden">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+          </table>
+        </div>
+
+        <!-- Mobile View Cards -->
+        <div id="mobileCardList" class="block md:hidden p-4 space-y-3"></div>
+
+        <div id="emptyState" class="hidden p-10 text-center">
+          <div class="w-16 h-16 rounded-3xl bg-slate-100 text-slate-300 flex items-center justify-center text-2xl mx-auto mb-3">
+            <i class="fa-regular fa-folder-open"></i>
+          </div>
+          <p class="text-slate-500 font-semibold text-xs">Belum ada data kendala tersimpan.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 pb-4">
+        <button type="button" onclick="downloadPDF()" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-file-pdf text-base"></i>
+          <span>Download PDF</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-6 text-xs text-slate-400 font-medium">
+    <p>Built by 69451</p>
+  </footer>
+
+  <script>
+    // =====================================================================
+    // KONFIGURASI - GANTI URL INI dengan URL deployment Apps Script kamu
+    // (Deploy > Manage deployments > Web app > pakai deployment yang SAMA
+    // setiap update, supaya URL ini tidak berubah-ubah)
+    // =====================================================================
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyduwMC2AoZwpIXU4XLM4rFBzOSWMVilusgEREu8FNyfwl7r62BcAwLei8wKJeQ6tU/exec";
+
+    let appData = [];
+    let isAdminLoggedIn = false;
+    let adminToken = null; // token dikirim ke server untuk aksi hapus
+
+    // ---------------------------------------------------------------------
+    // HELPER: panggil Apps Script via fetch
+    // POST dikirim sebagai text/plain supaya TIDAK memicu CORS preflight
+    // (Apps Script tidak menyediakan handler doOptions)
+    // ---------------------------------------------------------------------
+    async function callAppsScriptPost(action, payload) {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, payload: payload || {} })
+      });
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status + ' saat memanggil action "' + action + '"');
+      }
+      return res.json();
+    }
+
+    async function callAppsScriptGet(action, params) {
+      const url = new URL(APPS_SCRIPT_URL);
+      url.searchParams.set('action', action);
+      if (params) {
+        Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+      }
+      const res = await fetch(url.toString(), { method: 'GET' });
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status + ' saat memanggil action "' + action + '"');
+      }
+      return res.json();
+    }
+
+    window.onload = function() {
+      const now = new Date();
+      const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+      const dateEl = document.getElementById('headerCurrentDate');
+      if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', options);
+
+      // Restore sesi admin dari localStorage kalau ada (browser ini saja)
+      const savedToken = localStorage.getItem('adminToken');
+      if (savedToken) {
+        adminToken = savedToken;
+        isAdminLoggedIn = true;
+        updateAdminUI();
+      }
+
+      fetchDataFromAppsScript();
+    };
+
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    function openLoginModal() {
+      const modal = document.getElementById('loginModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeLoginModal() {
+      const modal = document.getElementById('loginModal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+
+    // -----------------------------------------------------------------
+    // LOGIN ADMIN
+    // Token admin sekarang divalidasi oleh SERVER (bukan hanya di client).
+    // Cara kerja: token yang dimasukkan disimpan di client, lalu dikirim
+    // ke server setiap kali melakukan aksi sensitif (hapus data). Server
+    // (code.gs) yang menentukan apakah token itu benar, dengan
+    // membandingkannya ke ADMIN_TOKEN yang tersimpan di Script Properties.
+    // Login di sini TIDAK melakukan pengecekan lokal supaya token tidak
+    // pernah di-hardcode di file yang publik di GitHub.
+    // -----------------------------------------------------------------
+    async function handleLoginAdmin(e) {
+      e.preventDefault();
+      const tokenInput = document.getElementById('adminTokenInput').value.trim();
+
+      if (!tokenInput) {
+        showToast('Gagal', 'Token tidak boleh kosong.', 'error');
+        return;
+      }
+
+      showToast('Memeriksa', 'Memvalidasi token...', 'info');
+
+      try {
+        // Validasi token dengan mencoba memanggil aksi ringan yang butuh auth.
+        // Kita pakai "deleteKendala" dengan target kosong hanya untuk
+        // memeriksa otorisasi tanpa benar-benar menghapus apa pun,
+        // karena server menolak token salah sebelum menyentuh data,
+        // dan menolak juga judul kosong sebelum menghapus apa pun.
+        const result = await callAppsScriptPost('deleteKendala', { token: tokenInput, targetTitle: '' });
+
+        if (result && result.message === 'Unauthorized. Token admin tidak valid.') {
+          showToast('Gagal Login!', 'Token salah.', 'error');
+          return;
+        }
+
+        // Token valid (server lolos validasi otorisasi, walau delete-nya sendiri gagal karena judul kosong)
+        adminToken = tokenInput;
+        isAdminLoggedIn = true;
+        localStorage.setItem('adminToken', tokenInput);
+        closeLoginModal();
+        showToast('Login Berhasil!', 'Status Admin Aktif.', 'success');
+        updateAdminUI();
+        document.getElementById('adminTokenInput').value = '';
+      } catch (err) {
+        showToast('Gagal!', 'Koneksi error: ' + err.message, 'error');
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      adminToken = null;
+      localStorage.removeItem('adminToken');
+      updateAdminUI();
+      showToast('Logout', 'Sesi Admin diakhiri.', 'info');
+    }
+
+    function updateAdminUI() {
+      const btnOpen = document.getElementById('btnOpenLoginModal');
+      const badge = document.getElementById('adminBadge');
+
+      if (isAdminLoggedIn) {
+        btnOpen.classList.add('hidden');
+        badge.classList.remove('hidden');
+      } else {
+        btnOpen.classList.remove('hidden');
+        badge.classList.add('hidden');
+      }
+      renderAllData();
+    }
+
+    async function deleteKendala(index) {
+      if (!isAdminLoggedIn) {
+        showToast('Ditolak!', 'Akses hapus hanya untuk Admin.', 'error');
+        return;
+      }
+
+      const item = appData[index];
+      if (!item) return;
+
+      if (!confirm(`Apakah Anda yakin ingin menghapus kendala:\n"${item.judulKendala}"?`)) {
+        return;
+      }
+
+      showToast('Memproses', 'Menghapus data...', 'info');
+
+      try {
+        const response = await callAppsScriptPost('deleteKendala', {
+          token: adminToken,
+          targetTitle: item.judulKendala || item.id
+        });
+
+        if (response && response.success) {
+          showToast('Terhapus!', 'Kendala berhasil dihapus.', 'success');
+          fetchDataFromAppsScript();
+        } else {
+          showToast('Gagal!', (response && response.message) ? response.message : 'Gagal menghapus.', 'error');
+        }
+      } catch (err) {
+        showToast('Gagal!', err.message || 'Koneksi error.', 'error');
+      }
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.classList.remove('bg-gradient-to-r', 'from-app-primary', 'to-app-accentPurple', 'text-white', 'shadow-purple-glow', 'font-bold');
+        el.classList.add('text-slate-600', 'font-semibold');
+      });
+
+      const targetSection = document.getElementById('content-' + tabName);
+      if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+      }
+
+      const activeBtn = document.getElementById('tab-' + tabName);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-600', 'font-semibold');
+        activeBtn.classList.add('bg-gradient-to-r', 'from-app-primary', 'to-app-accentPurple', 'text-white', 'shadow-purple-glow', 'font-bold');
+      }
+
+      if (tabName === 'kendala') renderRecentKendala();
+      else if (tabName === 'problem-solving') populateDropdownKendala();
+      else if (tabName === 'cek-data') sortData();
+    }
+
+    function checkFileLimit(input) {
+      var files = input.files;
+      var maxSizeBytes = 1 * 1024 * 1024; // 1 MB
+
+      if (files.length > 3) {
+        alert("Maksimal hanya boleh memilih 3 foto!");
+        input.value = "";
+        return;
+      }
+
+      for (var i = 0; i < files.length; i++) {
+        if (files[i].size > maxSizeBytes) {
+          alert("Foto '" + files[i].name + "' melebihi batas 1 MB!");
+          input.value = "";
+          return;
+        }
+      }
+    }
+
+    async function submitKendala(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitKendala');
+      if (!btn) return;
+      const originalText = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> <span>Mengunggah Foto & Menyimpan...</span>';
+
+      const fileInput = document.getElementById('fotoFileInput');
+      let fotoFilesArray = [];
+
+      if (fileInput && fileInput.files.length > 0) {
+        const files = fileInput.files;
+
+        if (files.length > 3) {
+          showToast('Batas Terlampaui', 'Maksimal hanya boleh mengunggah 3 foto.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+        }
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+
+          if (file.size > 1 * 1024 * 1024) {
+            showToast('File Terlalu Besar', `Foto "${file.name}" melebihi batas 1MB.`, 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+          }
+
+          try {
+            const base64Str = await getBase64(file);
+            fotoFilesArray.push({ fileName: file.name, base64: base64Str });
+          } catch (err) {
+            showToast('Gagal', `Gagal memproses file foto: ${file.name}`, 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+          }
+        }
+      }
+
+      const payload = {
+        judulKendala: document.getElementById('judulKendala').value,
+        detailKendala: document.getElementById('detailKendala').value,
+        solusiTerkini: document.getElementById('solusiTerkini').value,
+        fotoFiles: fotoFilesArray
+      };
+
+      try {
+        const response = await callAppsScriptPost('saveKendala', payload);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (response && response.success) {
+          showToast('Sukses', response.message, 'success');
+          document.getElementById('formKendala').reset();
+          fetchDataFromAppsScript();
+        } else {
+          showToast('Gagal', response ? response.message : 'Terjadi kesalahan sistem', 'error');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showToast('Error', err.toString(), 'error');
+      }
+    }
+
+    function populateDropdownKendala() {
+      const select = document.getElementById('selectJudulKendala');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- Pilih Judul Kendala --</option>';
+
+      const activeData = appData.filter(item => item && item.status !== 'Selesai');
+      if (activeData.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "(Semua kendala telah Selesai / Belum ada data)";
+        opt.disabled = true;
+        select.appendChild(opt);
+        return;
+      }
+
+      activeData.forEach(item => {
+        if (item && item.judulKendala) {
+          const opt = document.createElement('option');
+          opt.value = item.judulKendala;
+          opt.textContent = `${item.judulKendala} [${item.status || 'Baru'}]`;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    function generateMultiplePhotoHtml(urlsString) {
+      if (!urlsString || String(urlsString).trim() === '') {
+        return '<span class="text-slate-300 italic">-</span>';
+      }
+
+      const urls = String(urlsString).split('\n').map(u => u.trim()).filter(u => u !== '');
+      if (urls.length === 0) return '<span class="text-slate-300 italic">-</span>';
+
+      return urls.map((url, index) => {
+        return `<a href="${escapeHtml(url)}" target="_blank" class="inline-flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-app-primary font-bold rounded-lg transition text-xs border border-indigo-200 my-0.5">
+          <i class="fa-solid fa-image text-indigo-500"></i>
+          <span>Foto ${index + 1}</span>
+        </a>`;
+      }).join(' ');
+    }
+
+    function onSelectKendalaChanged() {
+      const selectedTitle = document.getElementById('selectJudulKendala').value;
+      const previewBox = document.getElementById('previewKendalaBox');
+      const found = appData.find(item => item && item.judulKendala === selectedTitle);
+
+      if (found) {
+        document.getElementById('prevDetailKendala').textContent = found.detailKendala || '-';
+        document.getElementById('prevSolusiTerkini').textContent = found.solusiTerkini || '-';
+
+        const prevFotoBox = document.getElementById('prevFotoBox');
+        const prevFotoContainer = document.getElementById('prevFotoContainer');
+
+        if (found.fotoUrl && found.fotoUrl.trim() !== '') {
+          prevFotoContainer.innerHTML = generateMultiplePhotoHtml(found.fotoUrl);
+          prevFotoBox.classList.remove('hidden');
+        } else {
+          prevFotoBox.classList.add('hidden');
+        }
+
+        document.getElementById('rootCause').value = found.rootCause || '';
+        document.getElementById('solusiPermanen').value = found.solusiPermanen || '';
+        document.getElementById('picKendala').value = found.pic || '';
+        document.getElementById('statusPenyelesaian').value = (found.status && found.status !== "Menunggu Problem Solving") ? found.status : "Dalam Proses";
+
+        previewBox.classList.remove('hidden');
+      } else {
+        previewBox.classList.add('hidden');
+      }
+    }
+
+    async function submitProblemSolving(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitPS');
+      const selectedTitle = document.getElementById('selectJudulKendala').value;
+
+      if (!selectedTitle) {
+        showToast('Peringatan', 'Silakan pilih kendala.', 'error');
+        return;
+      }
+
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> <span>Memperbarui...</span>';
+
+      const payload = {
+        judulKendala: selectedTitle,
+        rootCause: document.getElementById('rootCause').value.trim(),
+        solusiPermanen: document.getElementById('solusiPermanen').value.trim(),
+        picKendala: document.getElementById('picKendala').value.trim(),
+        statusPenyelesaian: document.getElementById('statusPenyelesaian').value
+      };
+
+      try {
+        const response = await callAppsScriptPost('saveProblemSolving', payload);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (response && response.success) {
+          showToast('Sukses!', response.message || 'Problem solving tersimpan.', 'success');
+          document.getElementById('formProblemSolving').reset();
+          document.getElementById('previewKendalaBox').classList.add('hidden');
+          fetchDataFromAppsScript();
+        } else {
+          showToast('Error!', response.message || 'Gagal memperbarui.', 'error');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showToast('Gagal!', err.message || 'Koneksi error.', 'error');
+      }
+    }
+
+    // Fungsi konversi berbagai format tanggal ke timestamp milidetik secara presisi
+    function parseTimestamp(ts) {
+      if (!ts) return 0;
+
+      // Jika ts sudah berupa instance Object Date JavaScript
+      if (ts instanceof Date) return ts.getTime();
+
+      // Jika berupa timestamp angka murni
+      if (typeof ts === 'number') return ts;
+
+      const str = String(ts).trim();
+      if (!str) return 0;
+
+      // 1. Coba parsing bawaan JS dulu (mencakup ISO 8601 & Standard Formats)
+      const parsedDirect = Date.parse(str);
+      if (!isNaN(parsedDirect)) {
+        return parsedDirect;
+      }
+
+      // 2. Custom Fallback Parsing untuk format "DD/MM/YYYY HH:mm:ss" atau "DD-MM-YYYY"
+      try {
+        const parts = str.split(/\s+/);
+        if (parts.length >= 1) {
+          const dateParts = parts[0].split(/[\/-]/);
+          if (dateParts.length === 3) {
+            let p1 = parseInt(dateParts[0], 10);
+            let p2 = parseInt(dateParts[1], 10);
+            let p3 = parseInt(dateParts[2], 10);
+
+            let day, month, year;
+
+            // Deteksi jika format YYYY-MM-DD atau DD/MM/YYYY
+            if (p1 > 1000) {
+              // Format: YYYY/MM/DD
+              year = p1; month = p2 - 1; day = p3;
+            } else {
+              // Format: DD/MM/YYYY
+              day = p1; month = p2 - 1; year = p3 < 100 ? p3 + 2000 : p3;
+            }
+
+            let hour = 0, min = 0, sec = 0;
+            if (parts[1]) {
+              const timeParts = parts[1].split(':');
+              if (timeParts.length >= 1) hour = parseInt(timeParts[0], 10) || 0;
+              if (timeParts.length >= 2) min = parseInt(timeParts[1], 10) || 0;
+              if (timeParts.length >= 3) sec = parseInt(timeParts[2], 10) || 0;
+            }
+
+            const calculatedDate = new Date(year, month, day, hour, min, sec);
+            return isNaN(calculatedDate.getTime()) ? 0 : calculatedDate.getTime();
+          }
+        }
+      } catch (e) {
+        return 0;
+      }
+
+      return 0;
+    }
+
+    function sortData() {
+      const sortBy = document.getElementById('sortBy')?.value || 'NEWEST';
+      appData.sort((a, b) => {
+        const timeA = parseTimestamp(a.timestamp);
+        const timeB = parseTimestamp(b.timestamp);
+        return sortBy === 'NEWEST' ? timeB - timeA : timeA - timeB;
+      });
+      renderAllData();
+    }
+
+    function renderAllData() {
+      const tbody = document.getElementById('tableBody');
+      const mobileCardList = document.getElementById('mobileCardList');
+      const emptyState = document.getElementById('emptyState');
+
+      if(!tbody || !mobileCardList || !emptyState) return;
+
+      tbody.innerHTML = '';
+      mobileCardList.innerHTML = '';
+
+      const colActions = document.querySelectorAll('.col-action');
+      colActions.forEach(el => isAdminLoggedIn ? el.classList.remove('hidden') : el.classList.add('hidden'));
+
+      if (!Array.isArray(appData)) appData = [];
+
+      let totalCount = appData.length;
+      let prosesCount = 0;
+      let selesaiCount = 0;
+
+      if (totalCount === 0) emptyState.classList.remove('hidden');
+      else emptyState.classList.add('hidden');
+
+      renderRecentKendala();
+
+      appData.forEach((item, index) => {
+        if(!item) return;
+
+        if (item.status === 'Selesai') selesaiCount++;
+        else if (item.status === 'Dalam Proses') prosesCount++;
+
+        let statusBadge = '';
+        if (item.status === 'Selesai') {
+          statusBadge = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Selesai</span>';
+        } else if (item.status === 'Dalam Proses') {
+          statusBadge = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900"><i class="fa-solid fa-spinner mr-1 text-amber-600"></i> Proses</span>';
+        } else {
+          statusBadge = '<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700"><i class="fa-solid fa-clock mr-1 text-slate-400"></i> Belum Solusi</span>';
+        }
+
+        let fotoHtml = generateMultiplePhotoHtml(item.fotoUrl);
+
+        // Tabel Desktop
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-indigo-50/40 transition border-b border-slate-100 table-row-item';
+        row.dataset.title = (item.judulKendala || '').toLowerCase();
+        row.dataset.detail = (item.detailKendala || '').toLowerCase();
+        row.dataset.pic = (item.pic || '').toLowerCase();
+        row.dataset.status = item.status || '';
+
+        row.innerHTML = `
+          <td class="py-3.5 px-4 text-slate-400 font-bold align-top">${index + 1}</td>
+          <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap align-top">${item.timestamp || '-'}</td>
+          <td class="py-3.5 px-4 font-bold text-slate-900 align-top break-words">${escapeHtml(item.judulKendala)}</td>
+          <td class="py-3.5 px-4 text-slate-600 align-top break-words">${escapeHtml(item.detailKendala)}</td>
+          <td class="py-3.5 px-4 text-slate-600 align-top break-words">${escapeHtml(item.solusiTerkini)}</td>
+          <td class="py-3.5 px-4 text-center align-top whitespace-nowrap">${fotoHtml}</td>
+          <td class="py-3.5 px-4 text-slate-600 align-top break-words">
+            ${item.solusiPermanen ? `<div class="font-bold text-emerald-700">${escapeHtml(item.solusiPermanen)}</div><div class="text-[10px] text-slate-400 mt-1">RC: ${escapeHtml(item.rootCause)}</div>` : '<span class="text-slate-300 italic">Belum diisi</span>'}
+          </td>
+          <td class="py-3.5 px-4 text-center font-semibold text-slate-700 align-top">${escapeHtml(item.pic || '-')}</td>
+          <td class="py-3.5 px-4 text-center whitespace-nowrap align-top">${statusBadge}</td>
+          ${isAdminLoggedIn ? `
+            <td class="py-3.5 px-4 text-center align-top col-action whitespace-nowrap">
+              <button type="button" onclick="deleteKendala(${index})" title="Hapus" class="px-2.5 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold rounded-lg transition text-xs">
+                <i class="fa-solid fa-trash-can mr-1"></i>Hapus
+              </button>
+            </td>
+          ` : ''}
+        `;
+        tbody.appendChild(row);
+
+        // Mobile Cards
+        const mCard = document.createElement('div');
+        mCard.className = 'mobile-data-card bg-slate-50/80 border border-indigo-100/60 rounded-2xl p-4 space-y-3 transition shadow-sm';
+        mCard.dataset.title = (item.judulKendala || '').toLowerCase();
+        mCard.dataset.detail = (item.detailKendala || '').toLowerCase();
+        mCard.dataset.pic = (item.pic || '').toLowerCase();
+        mCard.dataset.status = item.status || '';
+
+        mCard.innerHTML = `
+          <div class="flex items-start justify-between gap-2 border-b border-slate-200/50 pb-2.5">
+            <div class="font-bold text-sm text-slate-900 break-words">${escapeHtml(item.judulKendala)}</div>
+            <div class="flex-shrink-0">${statusBadge}</div>
+          </div>
+          <div class="text-xs text-slate-600 space-y-2">
+            <div><span class="font-bold text-slate-500">Detail:</span> ${escapeHtml(item.detailKendala)}</div>
+            <div><span class="font-bold text-slate-500">Solusi Terkini:</span> ${escapeHtml(item.solusiTerkini)}</div>
+            <div class="flex flex-wrap items-center gap-1 pt-1">
+              <span class="font-bold text-slate-500">Foto Bukti:</span>
+              <div class="flex flex-wrap gap-1">${fotoHtml}</div>
+            </div>
+            ${item.solusiPermanen ? `
+              <div class="mt-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                <div class="font-bold text-emerald-900 text-xs mb-0.5">Fix Solution:</div>
+                <div class="text-emerald-800 text-xs">${escapeHtml(item.solusiPermanen)}</div>
+                <div class="text-[10px] text-emerald-600 mt-1 font-medium">RC: ${escapeHtml(item.rootCause)}</div>
+              </div>
+            ` : ''}
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-400">
+            <span><i class="fa-regular fa-clock mr-1"></i>${item.timestamp || '-'}</span>
+            <div class="flex items-center space-x-3">
+              <span class="font-bold text-slate-600"><i class="fa-solid fa-user-circle mr-1 text-app-primary"></i>${escapeHtml(item.pic || 'Tanpa PIC')}</span>
+              ${isAdminLoggedIn ? `
+                <button type="button" onclick="deleteKendala(${index})" class="px-2 py-1 bg-rose-100 text-rose-600 font-bold rounded-lg text-[10px]">
+                  <i class="fa-solid fa-trash-can mr-1"></i>Hapus
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        mobileCardList.appendChild(mCard);
+      });
+
+      filterDataTable();
+
+      document.getElementById('statTotal').textContent = totalCount;
+      document.getElementById('statProses').textContent = prosesCount;
+      document.getElementById('statSelesai').textContent = selesaiCount;
+    }
+
+    function filterDataTable() {
+      const query = (document.getElementById('searchInput').value || '').toLowerCase();
+      const filterStatus = document.getElementById('filterStatus').value;
+
+      document.querySelectorAll('.table-row-item').forEach(row => {
+        const matchesText = row.dataset.title.includes(query) || row.dataset.detail.includes(query) || row.dataset.pic.includes(query);
+        const matchesStatus = (filterStatus === 'ALL') || (row.dataset.status === filterStatus);
+        row.style.display = (matchesText && matchesStatus) ? '' : 'none';
+      });
+
+      document.querySelectorAll('.mobile-data-card').forEach(card => {
+        const matchesText = card.dataset.title.includes(query) || card.dataset.detail.includes(query) || card.dataset.pic.includes(query);
+        const matchesStatus = (filterStatus === 'ALL') || (card.dataset.status === filterStatus);
+        card.style.display = (matchesText && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    function renderRecentKendala() {
+      const container = document.getElementById('recentKendalaList');
+      if(!container) return;
+      container.innerHTML = '';
+
+      if(!Array.isArray(appData) || appData.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 italic col-span-2">Belum ada kendala.</p>';
+        return;
+      }
+
+      const sortedRecent = [...appData].sort((a, b) => parseTimestamp(b.timestamp) - parseTimestamp(a.timestamp));
+      const recentItems = sortedRecent.slice(0, 4);
+
+      recentItems.forEach(item => {
+        if(!item) return;
+        const card = document.createElement('div');
+        card.className = "p-4 rounded-2xl border border-indigo-100/60 bg-white shadow-soft-widget flex flex-col justify-between space-y-2";
+        card.innerHTML = `
+          <div>
+            <div class="font-bold text-xs text-slate-900 line-clamp-1">${escapeHtml(item.judulKendala)}</div>
+            <div class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">${escapeHtml(item.detailKendala)}</div>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px]">
+            <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${item.timestamp || ''}</span>
+            <span class="font-bold px-2 py-0.5 rounded-full bg-app-cardPurple text-app-primary">${item.status || 'Baru'}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function refreshData() {
+      fetchDataFromAppsScript();
+    }
+
+    async function fetchDataFromAppsScript() {
+      showToast('Loading', 'Memuat data...', 'info');
+      try {
+        const response = await callAppsScriptGet('getAllData');
+        if (response && response.success) {
+          appData = response.data || [];
+          sortData(); // Memastikan otomatis diurutkan Terbaru -> Lama secara default
+          populateDropdownKendala();
+          showToast('Sukses', 'Data dimuat.', 'success');
+        } else {
+          showToast('Gagal', (response && response.message) ? response.message : 'Gagal memuat data.', 'error');
+        }
+      } catch (err) {
+        showToast('Gagal', 'Gagal memuat data: ' + err.message, 'error');
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showToast(title, message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      if (!toast || !toastMessage || !toastIcon) return;
+
+      toastMessage.innerHTML = `<span class="font-bold">${title}</span> ${message}`;
+
+      if (type === 'success') {
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+      } else if (type === 'error') {
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
+      } else {
+        toastIcon.innerHTML = '<i class="fa-solid fa-circle-info text-sky-400"></i>';
+      }
+
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function downloadPDF() {
+      if (!appData || appData.length === 0) {
+        showToast('Peringatan', 'Tidak ada data untuk diunduh.', 'error');
+        return;
+      }
+
+      showToast('Memproses', 'Membuat berkas PDF...', 'info');
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59);
+        doc.text("Laporan Tracker Kendala & Problem Solving", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Dicetak pada: " + new Date().toLocaleString("id-ID"), 14, 21);
+
+        const tableHeaders = [["No", "ID", "Waktu", "Judul Kendala", "Detail Kendala", "Solusi Terkini", "Foto URL", "Fix Solution / RC", "PIC", "Status"]];
+
+        const tableRows = appData.map((item, index) => {
+          let fixSolText = '-';
+          if (item.solusiPermanen) {
+            fixSolText = item.solusiPermanen + (item.rootCause ? ` (RC: ${item.rootCause})` : '');
+          }
+
+          return [
+            index + 1,
+            item.id || '-',
+            item.timestamp || '-',
+            item.judulKendala || '-',
+            item.detailKendala || '-',
+            item.solusiTerkini || '-',
+            item.fotoUrl || '-',
+            fixSolText,
+            item.pic || '-',
+            item.status || 'Belum Solusi'
+          ];
+        });
+
+        doc.autoTable({
+          head: tableHeaders,
+          body: tableRows,
+          startY: 26,
+          theme: 'grid',
+          styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
+          headStyles: { fillColor: [99, 91, 252], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+          columnStyles: {
+            0: { halign: 'center', cellWidth: 8 },
+            1: { cellWidth: 16 },
+            2: { cellWidth: 22 },
+            3: { cellWidth: 35, fontStyle: 'bold' },
+            4: { cellWidth: 40 },
+            5: { cellWidth: 35 },
+            6: { cellWidth: 30 },
+            7: { cellWidth: 40 },
+            8: { halign: 'center', cellWidth: 18 },
+            9: { halign: 'center', cellWidth: 22 }
+          }
+        });
+
+        const fileName = `Laporan_Kendala_${new Date().toISOString().slice(0,10)}.pdf`;
+        doc.save(fileName);
+        showToast('Sukses!', 'Berkas PDF diunduh.', 'success');
+
+      } catch (err) {
+        showToast('Gagal!', 'Terjadi kesalahan saat membuat PDF.', 'error');
+      }
+    }
+  </script>
+</body>
+
+</html>
